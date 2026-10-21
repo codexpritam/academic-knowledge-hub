@@ -8,7 +8,6 @@ const api = axios.create({
   },
 });
 
-// Response interceptor to format error messages
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
@@ -16,23 +15,30 @@ api.interceptors.response.use(
 
     if (error.response?.data?.message) {
       message = error.response.data.message;
-    } else if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
+    } else if (
+      error.response?.data?.errors &&
+      Array.isArray(error.response.data.errors)
+    ) {
       message = error.response.data.errors.join(', ');
     } else if (error.message) {
       message = error.message;
     }
 
-    // Parse out raw JSON if Google API error was stringified
-    if (typeof message === 'string' && message.includes('{"error":')) {
+    if (
+      typeof message === 'string' &&
+      message.includes('{"error":')
+    ) {
       const jsonMatch = message.match(/\{[\s\S]*"error"[\s\S]*\}/);
+
       if (jsonMatch) {
         try {
           const parsed = JSON.parse(jsonMatch[0]);
+
           if (parsed?.error?.message) {
             message = parsed.error.message;
           }
         } catch {
-          // Keep original
+          // Keep original message
         }
       }
     }
