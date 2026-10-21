@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
 
 /**
  * Generate application JWT token
- * @param {object} user 
+ * @param {object} user
  * @returns {string}
  */
 const generateToken = (user) => {
@@ -26,15 +26,16 @@ const generateToken = (user) => {
 
 /**
  * Configure and set HttpOnly auth cookie
- * @param {object} res 
- * @param {string} token 
+ * @param {object} res
+ * @param {string} token
  */
 const setAuthCookie = (res, token) => {
   const isProduction = config.env === 'production';
+
   res.cookie('token', token, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: config.cookieMaxAge,
     path: '/'
   });
@@ -42,14 +43,15 @@ const setAuthCookie = (res, token) => {
 
 /**
  * Clear auth cookie
- * @param {object} res 
+ * @param {object} res
  */
 const clearAuthCookie = (res) => {
   const isProduction = config.env === 'production';
+
   res.clearCookie('token', {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/'
   });
 };
@@ -62,8 +64,11 @@ const registerUser = async ({ name, email, password }) => {
 
   // Check if user already exists
   const existingUser = await User.findOne({ email: normalizedEmail });
+
   if (existingUser) {
-    const error = new Error('An account with this email address already exists');
+    const error = new Error(
+      'An account with this email address already exists'
+    );
     error.statusCode = 400;
     throw error;
   }
@@ -77,11 +82,17 @@ const registerUser = async ({ name, email, password }) => {
     email: normalizedEmail,
     passwordHash,
     role: USER_ROLES.STUDENT,
-    avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`
+    avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+      name.trim()
+    )}`
   });
 
   const token = generateToken(newUser);
-  return { user: newUser, token };
+
+  return {
+    user: newUser,
+    token
+  };
 };
 
 /**
@@ -90,7 +101,10 @@ const registerUser = async ({ name, email, password }) => {
 const loginUser = async ({ email, password }) => {
   const normalizedEmail = email.toLowerCase().trim();
 
-  const user = await User.findOne({ email: normalizedEmail });
+  const user = await User.findOne({
+    email: normalizedEmail
+  });
+
   if (!user) {
     const error = new Error('Invalid email or password');
     error.statusCode = 401;
@@ -98,12 +112,15 @@ const loginUser = async ({ email, password }) => {
   }
 
   if (!user.passwordHash) {
-    const error = new Error('This account was created using Google. Please log in with Google.');
+    const error = new Error(
+      'This account was created using Google. Please log in with Google.'
+    );
     error.statusCode = 400;
     throw error;
   }
 
   const isMatch = await user.comparePassword(password);
+
   if (!isMatch) {
     const error = new Error('Invalid email or password');
     error.statusCode = 401;
@@ -111,30 +128,46 @@ const loginUser = async ({ email, password }) => {
   }
 
   const token = generateToken(user);
-  return { user, token };
+
+  return {
+    user,
+    token
+  };
 };
 
 /**
- * Handle Google authentication payload (from ID token or OAuth callback)
+ * Handle Google authentication payload
+ * from ID token or OAuth callback
  */
-const handleGoogleUser = async ({ googleId, email, name, picture }) => {
+const handleGoogleUser = async ({
+  googleId,
+  email,
+  name,
+  picture
+}) => {
   const normalizedEmail = email.toLowerCase().trim();
 
   let user = await User.findOne({
-    $or: [{ googleId }, { email: normalizedEmail }]
+    $or: [
+      { googleId },
+      { email: normalizedEmail }
+    ]
   });
 
   if (user) {
     // If user existed with email, link googleId and avatar if missing
     let updated = false;
+
     if (!user.googleId) {
       user.googleId = googleId;
       updated = true;
     }
+
     if (!user.avatar && picture) {
       user.avatar = picture;
       updated = true;
     }
+
     if (updated) {
       await user.save();
     }
@@ -144,14 +177,25 @@ const handleGoogleUser = async ({ googleId, email, name, picture }) => {
       name: name || 'Student User',
       email: normalizedEmail,
       googleId,
-      avatar: picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || 'S')}`,
+      avatar:
+        picture ||
+        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+          name || 'S'
+        )}`,
       role: USER_ROLES.STUDENT
     });
-    logger.info(`Created new user via Google Sign-In: ${user.email}`);
+
+    logger.info(
+      `Created new user via Google Sign-In: ${user.email}`
+    );
   }
 
   const token = generateToken(user);
-  return { user, token };
+
+  return {
+    user,
+    token
+  };
 };
 
 module.exports = {
@@ -162,5 +206,3 @@ module.exports = {
   loginUser,
   handleGoogleUser
 };
-
- 
