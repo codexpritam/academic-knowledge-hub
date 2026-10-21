@@ -13,6 +13,9 @@ const { sendError } = require('./utils/apiResponse');
 
 const app = express();
 
+// Render is behind a reverse proxy
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(
   helmet({
@@ -32,15 +35,34 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, or same-origin)
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin)
+      ) {
         return callback(null, true);
       }
-      return callback(null, true); // Permissive in development
+
+      return callback(
+        new Error('Not allowed by CORS')
+      );
     },
+
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+
+    methods: [
+      'GET',
+      'POST',
+      'PUT',
+      'PATCH',
+      'DELETE',
+      'OPTIONS'
+    ],
+
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With'
+    ]
   })
 );
 
