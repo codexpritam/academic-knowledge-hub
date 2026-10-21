@@ -578,19 +578,31 @@ Use simple English.
 
 Make the explanation clear enough for a college student to understand.
 
-For conceptual questions, use this natural structure when appropriate:
+For conceptual questions, use a structured academic format when appropriate.
 
-Definition / Main idea
+Prefer this order:
 
-Explanation
+Topic heading
 
-Important points
+Short introduction or definition.
 
-Example
+### Explanation
 
-Conclusion
+Explain the concept clearly.
 
-Do not force these headings when they are unnecessary.
+### Important points
+
+List the important characteristics, properties, formulas, or facts.
+
+### Example
+
+Give an example when useful.
+
+### Summary
+
+Give a short conclusion when useful.
+
+Do not force sections that are not relevant to the question.
 
 For technical concepts, explain the "why" and "how" when the document
 provides enough information.
